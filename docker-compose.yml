@@ -1,0 +1,43 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:latest
+    container_name: my-mysql-container
+    environment:
+      - MYSQL_USER=librarian
+      - MYSQL_ROOT_PASSWORD=librarypass
+      - MYSQL_DATABASE=library
+    networks:
+      - project-network
+    volumes:
+      - /root/docker-project/db-dump/library.sql:/docker-entrypoint-initdb.d
+      - /root/docker-project/db-data:/var/lib/mysql/
+
+  php:
+    build:
+      context: ./php/
+      dockerfile: Dockerfile
+    container_name: my-php-container
+    ports:
+      - 9000:9000
+    networks:
+      - project-network
+    volumes:
+      - /root/docker-project/web-files:/var/www/html/
+
+  nginx:
+    image: nginx:latest
+    container_name: my-nginx-container
+    ports:
+      - 8080:80
+    networks:
+      - project-network
+    depends_on:
+      - mysql
+      - php
+    volumes:
+      - /root/docker-project/nginx/:/etc/nginx/conf.d/
+      - /root/docker-project/web-files:/usr/share/nginx/html
+      
+networks:
+  project-network:
